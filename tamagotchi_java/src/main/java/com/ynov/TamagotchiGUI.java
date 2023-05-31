@@ -5,77 +5,70 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class TamagotchiGUI extends JFrame {
+public class TamagotchiGUI extends JFrame implements ActionListener {
     private Tamagotchi tamagotchi;
-    private JLabel hungerLabel;
-    private JLabel happinessLabel;
+    private JProgressBar vieProgressBar;
+    private JButton nourrirButton;
+    private JButton laverButton;
+    private JButton toiletteButton;
 
-    public TamagotchiGUI(Tamagotchi tamagotchi) {
-        this.tamagotchi = tamagotchi;
-        String playerName = askPlayerName();
-        tamagotchi.setName(playerName);
-        initializeUI();
-        setTitle("Tamagotchi - " + playerName);
-    }
+    public TamagotchiGUI(String nom) {
+        tamagotchi = new Tamagotchi(nom);
 
-    private void initializeUI() {
+        vieProgressBar = new JProgressBar();
+        vieProgressBar.setStringPainted(true);
+        updateProgressBar();
+
+        nourrirButton = new JButton("Nourrir");
+        nourrirButton.addActionListener(this);
+
+        laverButton = new JButton("Laver");
+        laverButton.addActionListener(this);
+
+        toiletteButton = new JButton("Faire sa toilette");
+        toiletteButton.addActionListener(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(4, 1));
+        panel.add(vieProgressBar);
+        panel.add(nourrirButton);
+        panel.add(laverButton);
+        panel.add(toiletteButton);
+
+        add(panel);
         setTitle("Tamagotchi");
+        setSize(300, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
-
-        // Création des boutons
-        JButton feedButton = new JButton("Nourrir");
-        JButton playButton = new JButton("Jouer");
-
-        // Création des étiquettes
-        hungerLabel = new JLabel("Faim : " + tamagotchi.getHunger());
-        happinessLabel = new JLabel("Bonheur : " + tamagotchi.getHappiness());
-
-        // Ajout des boutons et des étiquettes au panneau principal
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new GridLayout(2, 1));
-        mainPanel.add(feedButton);
-        mainPanel.add(playButton);
-        add(mainPanel, BorderLayout.CENTER);
-
-        // Ajout des étiquettes en bas
-        JPanel statusPanel = new JPanel();
-        statusPanel.setLayout(new FlowLayout());
-        statusPanel.add(hungerLabel);
-        statusPanel.add(happinessLabel);
-        add(statusPanel, BorderLayout.SOUTH);
-
-        // Définition des actions des boutons
-        feedButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tamagotchi.feed();
-                hungerLabel.setText("Faim : " + tamagotchi.getHunger());
-            }
-        });
-
-        playButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tamagotchi.play();
-                happinessLabel.setText("Bonheur : " + tamagotchi.getHappiness());
-            }
-        });
-
-        pack();
         setVisible(true);
+
+        String couleur = JOptionPane.showInputDialog(this, "Entrez la couleur du Tamagotchi :");
+        tamagotchi.setCouleur(couleur);
+        String nomJoueur = JOptionPane.showInputDialog(this, "Entrez votre nom :");
+        tamagotchi.setNomJoueur(nomJoueur);
     }
 
-    private String askPlayerName() {
-        return JOptionPane.showInputDialog(this, "Entrez le nom de votre Tamagotchi :");
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == nourrirButton) {
+            tamagotchi.nourrir();
+            updateProgressBar();
+        } else if (e.getSource() == laverButton) {
+            tamagotchi.laver();
+            updateProgressBar();
+        } else if (e.getSource() == toiletteButton) {
+            tamagotchi.faireToilette();
+            updateProgressBar();
+        }
+    }
+
+    private void updateProgressBar() {
+        vieProgressBar.setValue(tamagotchi.getVie());
+        vieProgressBar.setString("Vie : " + tamagotchi.getVie() + "%");
     }
 
     public static void main(String[] args) {
-        Tamagotchi tamagotchi = new Tamagotchi("");
         SwingUtilities.invokeLater(new Runnable() {
-            @Override
             public void run() {
-                new TamagotchiGUI(tamagotchi);
+                new TamagotchiGUI("Tamagotchi");
             }
         });
     }
