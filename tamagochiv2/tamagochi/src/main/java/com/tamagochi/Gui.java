@@ -24,8 +24,7 @@ public class Gui extends Application {
         happinessLabel = new Label(String.valueOf(tamagotchi.getHappiness()));
 
         Label statusTitleLabel = new Label("État:");
-        statusLabel = new Label(tamagotchi.getState().name());
-
+        statusLabel = new Label(getStateString(tamagotchi.getState()));
 
         Button playButton = new Button("Jouer");
         playButton.setOnAction(e -> play());
@@ -38,7 +37,7 @@ public class Gui extends Application {
 
         Button passTimeButton = new Button("Passer du temps");
         passTimeButton.setOnAction(e -> passTime());
-
+        
         VBox root = new VBox(10);
         root.setAlignment(Pos.CENTER);
         root.getChildren().addAll(
@@ -76,6 +75,25 @@ public class Gui extends Application {
 
     private void updateStatus() {
         happinessLabel.setText(String.valueOf(tamagotchi.getHappiness()));
-        statusLabel.setText(tamagotchi.getState().toString());
+        statusLabel.setText(getStateString(tamagotchi.getState()));
+    }
+
+    private String getStateString(int state) {
+        switch (state) {
+            case 0:
+                return "Heureux";
+            case 1:
+                return "Affamé";
+            case 2:
+                return "Sale";
+            case 3:
+                return "Ennuyé";
+            default:
+                return "Inconnu";
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
