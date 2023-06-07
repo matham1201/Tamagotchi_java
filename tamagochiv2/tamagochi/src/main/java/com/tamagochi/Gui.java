@@ -1,99 +1,85 @@
 package com.tamagochi;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import com.tamagochi.Tamagotchi.EtatVie;
+
 
 public class Gui extends Application {
     private Tamagotchi tamagotchi;
-    private Label happinessLabel;
-    private Label statusLabel;
+
+    private Label bonheurLabel;
+    private Label etatLabel;
+    private Label tempsLabel;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage primaryStage) {
         tamagotchi = new Tamagotchi();
 
-        Label titleLabel = new Label("Tamagotchi");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        primaryStage.setTitle("Tamagotchi");
+        primaryStage.setResizable(false);
 
-        Label happinessTitleLabel = new Label("Bonheur:");
-        happinessLabel = new Label(String.valueOf(tamagotchi.getHappiness()));
+        // Création des éléments de l'interface
+        Label bonheurTitleLabel = new Label("Bonheur:");
+        bonheurLabel = new Label(String.valueOf(tamagotchi.getBonheur()));
+        Label etatTitleLabel = new Label("Etat de vie:");
+        etatLabel = new Label(tamagotchi.getEtatVie().toString());
+        Label tempsTitleLabel = new Label("Temps écoulé depuis la dernière action:");
+        tempsLabel = new Label(String.valueOf(tamagotchi.getTempsDepuisDerniereAction()));
 
-        Label statusTitleLabel = new Label("État:");
-        statusLabel = new Label(getStateString(tamagotchi.getState()));
+        Button jouerButton = new Button("Jouer");
+        Button nourrirButton = new Button("Nourrir");
+        Button nettoyerButton = new Button("Nettoyer");
+        Button soignerButton = new Button("Soigner");
+        Button incrementerTempsButton = new Button("Passer une unité de temps");
+        Button afficherEtatButton = new Button("Afficher l'état du Tamagotchi");
 
-        Button playButton = new Button("Jouer");
-        playButton.setOnAction(e -> play());
+        // Ajout des actions aux boutons
+        jouerButton.setOnAction(e -> tamagotchi.jouer());
+        nourrirButton.setOnAction(e -> tamagotchi.nourrir());
+        nettoyerButton.setOnAction(e -> tamagotchi.nettoyer());
+        soignerButton.setOnAction(e -> tamagotchi.soigner());
+        incrementerTempsButton.setOnAction(e -> tamagotchi.incrementerTemps());
+        afficherEtatButton.setOnAction(e -> tamagotchi.afficherEtat());
 
-        Button feedButton = new Button("Nourrir");
-        feedButton.setOnAction(e -> feed());
-
-        Button cleanButton = new Button("Nettoyer");
-        cleanButton.setOnAction(e -> clean());
-
-        Button passTimeButton = new Button("Passer du temps");
-        passTimeButton.setOnAction(e -> passTime());
-        
-        VBox root = new VBox(10);
-        root.setAlignment(Pos.CENTER);
-        root.getChildren().addAll(
-                titleLabel,
-                happinessTitleLabel, happinessLabel,
-                statusTitleLabel, statusLabel,
-                playButton, feedButton, cleanButton, passTimeButton
+        // Création du layout principal
+        VBox mainLayout = new VBox(10);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+        mainLayout.getChildren().addAll(
+                bonheurTitleLabel, bonheurLabel,
+                etatTitleLabel, etatLabel,
+                tempsTitleLabel, tempsLabel,
+                jouerButton, nourrirButton, nettoyerButton, soignerButton, incrementerTempsButton, afficherEtatButton
         );
 
-        Scene scene = new Scene(root, 300, 300);
-        primaryStage.setTitle("Tamagotchi");
+        // Mise à jour des labels en fonction de l'état du Tamagotchi
+        tamagotchi.setOnTamagotchiUpdate(() -> {
+            Platform.runLater(() -> {
+                bonheurLabel.setText(String.valueOf(tamagotchi.getBonheur()));
+                etatLabel.setText(tamagotchi.getEtatVie().toString());
+                tempsLabel.setText(String.valueOf(tamagotchi.getTempsDepuisDerniereAction()));
+            });
+        });
+
+        // Création de la scène
+        Scene scene = new Scene(mainLayout, 300, 400);
         primaryStage.setScene(scene);
         primaryStage.show();
-    }
 
-    private void play() {
-        tamagotchi.play();
-        updateStatus();
+        
     }
+    
 
-    private void feed() {
-        tamagotchi.feed();
-        updateStatus();
-    }
-
-    private void clean() {
-        tamagotchi.clean();
-        updateStatus();
-    }
-
-    private void passTime() {
-        tamagotchi.passTime();
-        updateStatus();
-    }
-
-    private void updateStatus() {
-        happinessLabel.setText(String.valueOf(tamagotchi.getHappiness()));
-        statusLabel.setText(getStateString(tamagotchi.getState()));
-    }
-
-    private String getStateString(int state) {
-        switch (state) {
-            case 0:
-                return "Heureux";
-            case 1:
-                return "Affamé";
-            case 2:
-                return "Sale";
-            case 3:
-                return "Ennuyé";
-            default:
-                return "Inconnu";
-        }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
-    }
 }

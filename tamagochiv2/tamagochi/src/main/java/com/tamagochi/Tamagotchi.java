@@ -1,104 +1,211 @@
 package com.tamagochi;
 
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-class Tamagotchi implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private int happiness;
-    private int age;
-    private int state;
-    private int dirtyLevel;
-    private int feedCount;
+public class Tamagotchi {
+    private EtatVie etatVie;
+    private int bonheur;
+    private int tempsDepuisDerniereAction;
+    private boolean environnementSale;
+    private List<Runnable> tamagotchiUpdateListeners;
 
     public Tamagotchi() {
-        happiness = 15;
-        age = 0;
-        state = 0;
-        dirtyLevel = 0;
-        feedCount = 0;
+        etatVie = EtatVie.OEUF;
+        bonheur = 15;
+        tempsDepuisDerniereAction = 0;
+        environnementSale = false;
+        tamagotchiUpdateListeners = new ArrayList<>();
     }
 
-    public void passTime() {
-        age++;
+    public void setOnTamagotchiUpdate(Runnable listener) {
+        tamagotchiUpdateListeners.add(listener);
+    }
 
-        // Check the tamagotchi's state and update accordingly
-        if (state == 0 && age == 1) {
-            state = 1; // Egg hatches into baby
-        } else if (state == 1 && feedCount >= 4 && happiness >= 40) {
-            state = 2; // Baby becomes adult
-        } else if (state == 2 && age >= 15) {
-            state = 3; // Adult becomes old
-        } else if (state == 3 && age >= 20) {
-            state = 0; // Old tamagotchi dies
-            resetTamagotchi();
+    private void notifyTamagotchiUpdateListeners() {
+        tamagotchiUpdateListeners.forEach(Runnable::run);
+    }
+
+    public void incrementerTemps() {
+        tempsDepuisDerniereAction++;
+        
+        // Vérifier les conditions pour changer l'état de vie
+        if (etatVie == EtatVie.OEUF && tempsDepuisDerniereAction == 1) {
+            etatVie = EtatVie.BEBE;
+            tempsDepuisDerniereAction = 0;
+        } else if (etatVie == EtatVie.BEBE && tempsDepuisDerniereAction >= 4 && bonheur >= 40) {
+            etatVie = EtatVie.ADULTE;
+            tempsDepuisDerniereAction = 0;
+        } else if (etatVie == EtatVie.ADULTE && tempsDepuisDerniereAction >= 15) {
+            etatVie = EtatVie.VIEILLARD;
+            tempsDepuisDerniereAction = 0;
+        } else if (etatVie == EtatVie.VIEILLARD) {
+            if (tempsDepuisDerniereAction >= 1) {
+                etatVie = EtatVie.MORT;
+                tempsDepuisDerniereAction = 0;
+                bonheur = 0;
+            } else if (Math.random() < 0.33) {
+                etatVie = EtatVie.ADULTE;
+                tempsDepuisDerniereAction = 0;
+            }
         }
-
-        // Decrease happiness based on dirty level
-        if (dirtyLevel > 0) {
-            happiness -= 3;
+    
+        // Mettre à jour l'environnement si le Tamagotchi est vivant
+        if (isAlive()) {
+            if (tempsDepuisDerniereAction == 1) {
+                environnementSale = true;
+            } else if (tempsDepuisDerniereAction > 1) {
+                bonheur -= 3;
+                if (bonheur < 0) {
+                    bonheur = 0;
+                }
+            }
         }
-
-        // Decrease happiness if not fed
-        if (state != 0 && feedCount == 0) {
-            int hungerMultiplier = (feedCount / 4) + 1;
-            int happinessDecrease = hungerMultiplier * 5;
-            happiness -= happinessDecrease;
+    
+        notifyTamagotchiUpdateListeners();
+    
+        // Réinitialiser l'état et le bonheur si le Tamagotchi est mort
+        if (etatVie == EtatVie.MORT) {
+            etatVie = EtatVie.OEUF;
+            bonheur = 15;
+            environnementSale = false;
+            nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir
+            nombreJoursOublies = 0; // Réinitialiser le nombre de jours d'oubli
+            nombreActionsNettoyer = 0;
         }
+    
+        nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir à chaque unité de temps
+        nombreActionsJouer = 0;
+        nombreActionsNettoyer = 0; // Variable pour compter le nombre d'actions de nettoyer
+    }
+    
 
-        // Reset feed count and dirty level
-        feedCount = 0;
-        dirtyLevel++;
+    private boolean isAlive() {
+        return etatVie != EtatVie.OEUF && etatVie != EtatVie.MORT;
+    }
 
-        // Check if happiness reaches 0
-        if (happiness <= 0) {
-            state = 0;
-            System.out.println("Votre tamagotchi est mort !");
-            resetTamagotchi();
+    private int nombreActionsJouer = 0; // Variable pour compter le nombre d'actions de jouer
+
+    public void jouer() {
+        if (isAlive() && nombreActionsJouer < 3) { // Vérifier si le Tamagotchi est en vie et le nombre d'actions de jouer est inférieur à 3
+            bonheur += 3;
+            tempsDepuisDerniereAction = 0;
+            if (bonheur > 50) {
+                bonheur = 50;
+            }
+            nombreActionsJouer++; // Incrémenter le nombre d'actions de jouer
+            notifyTamagotchiUpdateListeners();
         }
+    }
+
+    private int nombreActionsNourrir = 0; // Variable pour compter le nombre d'actions de nourrir
+    private int nombreJoursOublies = 0; // Variable pour compter le nombre de jours d'oubli
+    private int nombreActionsNettoyer = 0; // Variable pour compter le nombre d'actions de nettoyer
+
+    public void nourrir() {
+        if (isAlive() && nombreActionsNourrir == 0) { // Vérifier si le Tamagotchi est en vie et si l'action de nourrir n'a pas encore été effectuée
+            if (environnementSale && !nourriDepuisDernierNettoyage()) { // Vérifier si l'environnement est sale et si le Tamagotchi n'a pas été nourri depuis le dernier nettoyage
+                bonheur -= (tempsDepuisDerniereAction * 5); // Diminuer le bonheur en fonction du nombre de jours d'oubli
+            } else {
+                bonheur -= 3; // Le Tamagotchi perd 3 points de bonheur s'il est nourri et que l'environnement est sale ou s'il est nourri après un nettoyage
+            }
+            tempsDepuisDerniereAction = 0;
+            if (bonheur < 0) {
+                bonheur = 0;
+            }
+            nombreActionsNourrir++; // Incrémenter le nombre d'actions de nourrir
+            notifyTamagotchiUpdateListeners();
+        }
+    }
+    
+    private boolean nourriDepuisDernierNettoyage() {
+        return nombreActionsNourrir > 0 && nombreActionsNourrir < nombreActionsNettoyer;
+    }
+
+    public void nettoyer() {
+        if (isAlive() && environnementSale) { // Vérifier si le Tamagotchi est en vie et si l'environnement est sale
+            if (nombreActionsNourrir == 0) { // Vérifier si le Tamagotchi n'a pas été nourri dans la même unité de temps
+                bonheur -= 3;
+            }
+            tempsDepuisDerniereAction = 0;
+            environnementSale = false;
+            if (bonheur < 0) {
+                bonheur = 0;
+            }
+            nombreActionsNettoyer++; // Incrémenter le nombre d'actions de nettoyer
+            notifyTamagotchiUpdateListeners();
+        }
+    }
+    public void soigner() {
+        if (isAlive() && etatVie != EtatVie.MORT) { // Vérifier si le Tamagotchi est en vie et n'est pas déjà mort
+                if (Math.random() < 1.0 / 3.0) { // Une chance sur trois de tomber malade
+                    etatVie = EtatVie.MORT; // Si le Tamagotchi n'est pas malade et qu'on oublie de le soigner, il meurt
+                    bonheur = 0;
+                    
+                    // Réinitialiser l'état et le bonheur pour recommencer le jeu
+                    etatVie = EtatVie.OEUF;
+                    bonheur = 15;
+                    environnementSale = false;
+                    nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir
+                    nombreJoursOublies = 0; // Réinitialiser le nombre de jours d'oubli
+                    nombreActionsNettoyer = 0;
+                    
+                    notifyTamagotchiUpdateListeners();
+                } else {
+                    etatVie = EtatVie.VIEILLARD; // Si le Tamagotchi n'est pas malade, il reste à l'état de Vieillard
+                }
+            
+            tempsDepuisDerniereAction = 0;
+            notifyTamagotchiUpdateListeners();
+        }
+    }
+    
+    
+
+    public EtatVie getEtatVie() {
+        return etatVie;
+    }
+
+    public int getBonheur() {
+        return bonheur;
+    }
+
+    public String getStatus() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("État du Tamagotchi:\n");
+        sb.append("Vie: ").append(etatVie.toString()).append("\n");
+        sb.append("Bonheur: ").append(bonheur).append("\n");
+        sb.append("Temps depuis dernière action: ").append(tempsDepuisDerniereAction).append("\n");
+        sb.append("Environnement sale: ").append(environnementSale ? "Oui" : "Non").append("\n");
+        return sb.toString();
     }
 
     public void play() {
-        if (state == 2) {
-            happiness += 3;
-            System.out.println("Vous jouez avec votre tamagotchi !");
-        } else {
-            System.out.println("Impossible de jouer avec le tamagotchi dans cet état !");
-        }
+        jouer();
     }
 
     public void feed() {
-        if (state != 0) {
-            happiness += 5;
-            feedCount++;
-            System.out.println("Vous nourrissez votre tamagotchi !");
-        } else {
-            System.out.println("Impossible de nourrir le tamagotchi dans cet état !");
-        }
+        nourrir();
     }
 
     public void clean() {
-        if (dirtyLevel > 0) {
-            happiness += 2;
-            dirtyLevel = 0;
-            System.out.println("Vous nettoyez l'environnement du tamagotchi !");
-        } else {
-            System.out.println("L'environnement du tamagotchi est déjà propre !");
-        }
+        nettoyer();
     }
 
-    public void resetTamagotchi() {
-        happiness = 15;
-        age = 0;
-        state = 0;
-        dirtyLevel = 0;
-        feedCount = 0;
+    public int getTempsDepuisDerniereAction() {
+        return tempsDepuisDerniereAction;
     }
 
-    public int getHappiness() {
-        return happiness;
+    public String afficherEtat() {
+        return getStatus();
     }
 
-    public int getState() {
-        return state;
+    public enum EtatVie {
+        OEUF,
+        BEBE,
+        ADULTE,
+        VIEILLARD,
+        MALADE,
+        MORT
     }
 }
