@@ -1,16 +1,16 @@
 package com.tamagochi;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Tamagotchi {
+public class Tamagotchi implements Serializable {
     private EtatVie etatVie;
     private int bonheur;
     private int tempsDepuisDerniereAction;
     private boolean environnementSale;
     private List<Runnable> tamagotchiUpdateListeners;
     private boolean estMalade;
-
 
     public Tamagotchi() {
         etatVie = EtatVie.OEUF;
@@ -30,7 +30,7 @@ public class Tamagotchi {
 
     public void incrementerTemps() {
         tempsDepuisDerniereAction++;
-        
+
         // Vérifier les conditions pour changer l'état de vie
         if (etatVie == EtatVie.OEUF && tempsDepuisDerniereAction == 1) {
             etatVie = EtatVie.BEBE;
@@ -41,19 +41,16 @@ public class Tamagotchi {
         } else if (etatVie == EtatVie.ADULTE && tempsDepuisDerniereAction >= 15) {
             etatVie = EtatVie.VIEILLARD;
             tempsDepuisDerniereAction = 0;
-            
+
             // Le Tamagotchi devient malade avec une chance de 1 sur 3
             if (Math.random() < 1.0 / 3.0) {
                 estMalade = true;
             }
-        } else if (etatVie == EtatVie.VIEILLARD) {
-            if (tempsDepuisDerniereAction >= 1) {
-                etatVie = EtatVie.MORT;
-                tempsDepuisDerniereAction = 0;
-                bonheur = 0;
-            }
+        } else if (etatVie == EtatVie.VIEILLARD && tempsDepuisDerniereAction >= 5) {
+            etatVie = EtatVie.MORT;
+            tempsDepuisDerniereAction = 0;
         }
-    
+
         // Mettre à jour l'environnement si le Tamagotchi est vivant
         if (isAlive()) {
             if (tempsDepuisDerniereAction == 1) {
@@ -81,6 +78,8 @@ public class Tamagotchi {
         nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir à chaque unité de temps
         nombreActionsJouer = 0;
         nombreActionsNettoyer = 0; // Variable pour compter le nombre d'actions de nettoyer
+
+        
     }
     
     
