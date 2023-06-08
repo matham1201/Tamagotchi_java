@@ -1,52 +1,72 @@
 package com.tamagochi;
 
 import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
-public class Main extends Application {
-    private Tamagotchi tamagotchi;
+import java.util.Scanner;
 
+public class Main {
     public static void main(String[] args) {
-        launch(args);
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Choisissez le mode de jeu :");
+        System.out.println("1. Mode en ligne de commande");
+        System.out.println("2. Mode avec interface graphique");
+
+        int choix = scanner.nextInt();
+        if (choix == 1) {
+            launchCommandLine();
+        } else if (choix == 2) {
+            Application.launch(Gui.class, args);
+        } else {
+            System.out.println("Choix invalide");
+        }
     }
 
-    @Override
-    public void start(Stage primaryStage) {
-        tamagotchi = new Tamagotchi();
+    private static void launchCommandLine() {
+        Tamagotchi tamagotchi = new Tamagotchi();
+        Scanner scanner = new Scanner(System.in);
 
-        Label tamagotchiStatusLabel = new Label();
-        tamagotchiStatusLabel.setText(tamagotchi.getStatus());
+        while (true) {
+            System.out.println("\n");
+            System.out.println("Bonheur: " + tamagotchi.getBonheur());
+            System.out.println("Etat de vie: " + tamagotchi.getEtatVie().toString());
+            System.out.println("Temps écoulé depuis la dernière action: " + tamagotchi.getTempsDepuisDerniereAction());
+            System.out.println("Etat de l'environnement: " + tamagotchi.getPropreteEnvironnement());
+            System.out.println("\n");
+            System.out.println("Que voulez-vous faire ?");
+            System.out.println("1. Jouer");
+            System.out.println("2. Nourrir");
+            System.out.println("3. Nettoyer");
+            System.out.println("4. Soigner");
+            System.out.println("5. Passer une unité de temps");
+            System.out.println("6. Afficher l'état du Tamagotchi");
+            System.out.println("7. Quitter");
 
-        Button playButton = new Button("Play");
-        playButton.setOnAction(e -> {
-            tamagotchi.play();
-            tamagotchiStatusLabel.setText(tamagotchi.getStatus());
-        });
-
-        Button feedButton = new Button("Feed");
-        feedButton.setOnAction(e -> {
-            tamagotchi.feed();
-            tamagotchiStatusLabel.setText(tamagotchi.getStatus());
-        });
-
-        Button cleanButton = new Button("Clean");
-        cleanButton.setOnAction(e -> {
-            tamagotchi.clean();
-            tamagotchiStatusLabel.setText(tamagotchi.getStatus());
-        });
-
-        VBox root = new VBox(10);
-        root.setAlignment(Pos.CENTER);
-        root.getChildren().addAll(tamagotchiStatusLabel, playButton, feedButton, cleanButton);
-
-        Scene scene = new Scene(root, 300, 200);
-        primaryStage.setTitle("Tamagotchi App");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+            int choix = scanner.nextInt();
+            switch (choix) {
+                case 1:
+                    tamagotchi.jouer();
+                    break;
+                case 2:
+                    tamagotchi.nourrir();
+                    break;
+                case 3:
+                    tamagotchi.nettoyer();
+                    break;
+                case 4:
+                    tamagotchi.soigner();
+                    break;
+                case 5:
+                    tamagotchi.incrementerTemps();
+                    break;
+                case 6:
+                    tamagotchi.afficherEtat();
+                    break;
+                case 7:
+                    System.out.println("Au revoir !");
+                    System.exit(0);
+                default:
+                    System.out.println("Choix invalide");
+            }
+        }
     }
 }

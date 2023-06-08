@@ -9,6 +9,8 @@ public class Tamagotchi {
     private int tempsDepuisDerniereAction;
     private boolean environnementSale;
     private List<Runnable> tamagotchiUpdateListeners;
+    private boolean estMalade;
+
 
     public Tamagotchi() {
         etatVie = EtatVie.OEUF;
@@ -39,14 +41,16 @@ public class Tamagotchi {
         } else if (etatVie == EtatVie.ADULTE && tempsDepuisDerniereAction >= 15) {
             etatVie = EtatVie.VIEILLARD;
             tempsDepuisDerniereAction = 0;
+            
+            // Le Tamagotchi devient malade avec une chance de 1 sur 3
+            if (Math.random() < 1.0 / 3.0) {
+                estMalade = true;
+            }
         } else if (etatVie == EtatVie.VIEILLARD) {
             if (tempsDepuisDerniereAction >= 1) {
                 etatVie = EtatVie.MORT;
                 tempsDepuisDerniereAction = 0;
                 bonheur = 0;
-            } else if (Math.random() < 0.33) {
-                etatVie = EtatVie.ADULTE;
-                tempsDepuisDerniereAction = 0;
             }
         }
     
@@ -78,6 +82,7 @@ public class Tamagotchi {
         nombreActionsJouer = 0;
         nombreActionsNettoyer = 0; // Variable pour compter le nombre d'actions de nettoyer
     }
+    
     
 
     private boolean isAlive() {
@@ -137,29 +142,28 @@ public class Tamagotchi {
         }
     }
     public void soigner() {
-        if (isAlive() && etatVie != EtatVie.MORT) { // Vérifier si le Tamagotchi est en vie et n'est pas déjà mort
-                if (Math.random() < 1.0 / 3.0) { // Une chance sur trois de tomber malade
-                    etatVie = EtatVie.MORT; // Si le Tamagotchi n'est pas malade et qu'on oublie de le soigner, il meurt
-                    bonheur = 0;
-                    
-                    // Réinitialiser l'état et le bonheur pour recommencer le jeu
-                    etatVie = EtatVie.OEUF;
-                    bonheur = 15;
-                    environnementSale = false;
-                    nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir
-                    nombreJoursOublies = 0; // Réinitialiser le nombre de jours d'oubli
-                    nombreActionsNettoyer = 0;
-                    
-                    notifyTamagotchiUpdateListeners();
-                } else {
-                    etatVie = EtatVie.VIEILLARD; // Si le Tamagotchi n'est pas malade, il reste à l'état de Vieillard
+        if (etatVie == EtatVie.VIEILLARD && isAlive() && etatVie != EtatVie.MORT) { // Vérifier si le Tamagotchi est en vie et n'est pas déjà mort et au stade de vieillard
+            if (Math.random() < 1.0 / 3.0) { // Une chance sur trois de tomber malade
+                etatVie = EtatVie.MORT; // Si le Tamagotchi n'est pas malade et qu'on oublie de le soigner, il meurt
+                bonheur = 0;
+                if (etatVie == EtatVie.MORT) {
+                // Réinitialiser l'état et le bonheur pour recommencer le jeu
+                etatVie = EtatVie.OEUF;
+                bonheur = 15;
+                environnementSale = false;
+                nombreActionsNourrir = 0; // Réinitialiser le nombre d'actions de nourrir
+                nombreJoursOublies = 0; // Réinitialiser le nombre de jours d'oubli
+                nombreActionsNettoyer = 0;
                 }
-            
+                notifyTamagotchiUpdateListeners();
+            } else {
+                etatVie = EtatVie.VIEILLARD; // Si le Tamagotchi n'est pas malade, il reste à l'état de Vieillard
+            }
+    
             tempsDepuisDerniereAction = 0;
             notifyTamagotchiUpdateListeners();
         }
     }
-    
     
 
     public EtatVie getEtatVie() {
@@ -177,8 +181,10 @@ public class Tamagotchi {
         sb.append("Bonheur: ").append(bonheur).append("\n");
         sb.append("Temps depuis dernière action: ").append(tempsDepuisDerniereAction).append("\n");
         sb.append("Environnement sale: ").append(environnementSale ? "Oui" : "Non").append("\n");
+        sb.append("Malade: ").append(estMalade ? "Oui" : "Non").append("\n");
         return sb.toString();
     }
+    
 
     public void play() {
         jouer();
@@ -191,7 +197,10 @@ public class Tamagotchi {
     public void clean() {
         nettoyer();
     }
-
+    public boolean isMalade() {
+        return estMalade;
+    }
+    
     public int getTempsDepuisDerniereAction() {
         return tempsDepuisDerniereAction;
     }
@@ -208,4 +217,13 @@ public class Tamagotchi {
         MALADE,
         MORT
     }
+
+    public String getPropreteEnvironnement() {
+        if (environnementSale == true  && nombreActionsNourrir > 0) {
+            return "sale";
+        } else {
+            return "propre";
+        }
+    }
+    
 }
